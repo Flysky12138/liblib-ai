@@ -1,7 +1,7 @@
 {
   "name": "liblib-ai",
   "displayName": "Liblib Ai",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Record requests, repeat requests",
   "author": "xhp443@gmail.com",
   "scripts": {

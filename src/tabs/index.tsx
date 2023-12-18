@@ -15,7 +15,6 @@ import { produce } from 'immer'
 import React from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 import { useAsyncFn, useInterval } from 'react-use'
-import { getPort } from '@plasmohq/messaging/port'
 import { Storage } from '@plasmohq/storage'
 import { useStorage } from '@plasmohq/storage/hook'
 import Card from '~components/Card'
@@ -86,7 +85,6 @@ export default function App() {
           })
         )
         toast.remove(toastID.current)
-        getPort('download').postMessage({ body: data.images })
         if (fetchOptions.current.times-- > 1) {
           await doGenerateImageFetch()
         }
@@ -126,14 +124,8 @@ export default function App() {
           </Tooltip>
           <ImageLists
             value={images}
-            onDelete={async payload => {
-              await setImages(
-                produce(state => {
-                  for (const index of payload) {
-                    if (index != -1) state.splice(index, 1)
-                  }
-                })
-              )
+            onDelete={async ids => {
+              await setImages(produce(state => state.filter(({ id }) => !ids.includes(id))))
             }}
           />
         </div>

@@ -4,8 +4,6 @@ import Close from '@mui/icons-material/Close'
 import DeleteForever from '@mui/icons-material/DeleteForever'
 import Chip from '@mui/joy/Chip'
 import IconButton from '@mui/joy/IconButton'
-import ImageList from '@mui/material/ImageList'
-import ImageListItem from '@mui/material/ImageListItem'
 import React from 'react'
 import { useWindowSize } from 'react-use'
 import { useImmer } from 'use-immer'
@@ -45,8 +43,8 @@ export default function ImageLists({ value: images, onDelete }: ImageListsPropsT
               variant="outlined"
               onClick={async () => {
                 if (!confirm('确认删除？')) return
-                const indexs = selectImages.map(selectImage => images.findIndex(v => v.id == selectImage.id))
-                await onDelete(indexs)
+                const ids = selectImages.map(selectImage => selectImage.id)
+                await onDelete(ids)
                 await setSelectImages([])
               }}
             >
@@ -75,32 +73,40 @@ export default function ImageLists({ value: images, onDelete }: ImageListsPropsT
           <Close />
         </IconButton>
       </div>
-      <ImageList variant="masonry" cols={Math.round(width / 200)} gap={16} className="p-2">
+      <div
+        className="grid-c grid gap-4 p-2"
+        style={{
+          gridTemplateColumns: `repeat(${Math.round(width / 200)}, minmax(0, 1fr))`
+        }}
+      >
         {images.map((image, index) => (
-          <ImageListItem key={image.id}>
-            <div className="relative">
-              <img
-                draggable="false"
-                className={cn('used cursor-pointer ring-orange-600 ring-offset-1', {
-                  ring: selectImages.find(v => v.id == image.id)
-                })}
-                loading="lazy"
-                onClick={() => {
-                  setSelectImages(state => {
-                    const index = selectImages.findIndex(v => v.id == image.id)
-                    index == -1 ? state.push(image) : state.splice(index, 1)
-                  })
-                }}
-                key={index}
-                src={image.previewPath}
-              />
-              <Chip size="sm" color="warning" variant="plain" className="absolute bottom-1 left-1 font-bold">
-                {index + 1}
-              </Chip>
-            </div>
-          </ImageListItem>
+          <div className="relative" key={image.id}>
+            <img
+              draggable="false"
+              className={cn('used cursor-pointer ring-orange-600 ring-offset-1', {
+                ring: selectImages.find(v => v.id == image.id)
+              })}
+              loading="lazy"
+              decoding="async"
+              onClick={() => {
+                setSelectImages(state => {
+                  const index = selectImages.findIndex(v => v.id == image.id)
+                  index == -1 ? state.push(image) : state.splice(index, 1)
+                })
+              }}
+              key={index}
+              src={image.previewPath}
+              onLoad={event => {
+                const target = event.target as HTMLImageElement
+                target.nextElementSibling.classList.remove('hidden')
+              }}
+            />
+            <Chip size="sm" color="warning" variant="plain" className="absolute bottom-1 left-1 hidden font-bold">
+              {index + 1}
+            </Chip>
+          </div>
         ))}
-      </ImageList>
+      </div>
     </CustomModal>
   )
 }
