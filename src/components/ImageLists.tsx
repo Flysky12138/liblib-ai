@@ -5,8 +5,7 @@ import DeleteForever from '@mui/icons-material/DeleteForever'
 import Chip from '@mui/joy/Chip'
 import IconButton from '@mui/joy/IconButton'
 import React from 'react'
-import { useWindowSize } from 'react-use'
-import { useImmer } from 'use-immer'
+import { useSet, useWindowSize } from 'react-use'
 import { getPort } from '@plasmohq/messaging/port'
 import { cn } from '~lib/cn'
 import CustomModal, { CustomModalRefType } from './CustomModal'
@@ -19,7 +18,7 @@ interface ImageListsPropsType {
 export default function ImageLists({ value: images, onDelete }: ImageListsPropsType) {
   const imagesModalRef = React.useRef<CustomModalRefType>()
 
-  const [selectImages, setSelectImages] = useImmer<ImageListsPropsType['value']>([])
+  const [selectImageIds, setSelectImageIds] = useSet<ImageListsPropsType['value'][0]['id']>()
 
   const { width } = useWindowSize()
 
@@ -36,16 +35,15 @@ export default function ImageLists({ value: images, onDelete }: ImageListsPropsT
       )}
     >
       <div className="mb-3 flex justify-end gap-x-3">
-        {selectImages.length ? (
+        {selectImageIds.size > 0 ? (
           <>
             <IconButton
               color="danger"
               variant="outlined"
               onClick={async () => {
                 if (!confirm('确认删除？')) return
-                const ids = selectImages.map(selectImage => selectImage.id)
-                await onDelete(ids)
-                await setSelectImages([])
+                await onDelete(Array.from(selectImageIds))
+                setSelectImageIds.reset()
               }}
             >
               <DeleteForever />
@@ -54,8 +52,8 @@ export default function ImageLists({ value: images, onDelete }: ImageListsPropsT
               color="primary"
               variant="outlined"
               onClick={async () => {
-                getPort('download').postMessage({ body: selectImages })
-                await setSelectImages([])
+                getPort('download').postMessage({ body: Array.from(selectImageIds).map(id => images.find(image => image.id == id)) })
+                setSelectImageIds.reset()
               }}
             >
               <ArrowDownward />
@@ -66,7 +64,7 @@ export default function ImageLists({ value: images, onDelete }: ImageListsPropsT
         <IconButton
           variant="outlined"
           onClick={async () => {
-            await setSelectImages([])
+            setSelectImageIds.reset()
             imagesModalRef.current?.setOpen(false)
           }}
         >
@@ -84,15 +82,20 @@ export default function ImageLists({ value: images, onDelete }: ImageListsPropsT
             <img
               draggable="false"
               className={cn('used cursor-pointer ring-orange-600 ring-offset-1', {
-                ring: selectImages.find(v => v.id == image.id)
+                ring: selectImageIds.has(image.id)
               })}
               loading="lazy"
               decoding="async"
-              onClick={() => {
-                setSelectImages(state => {
-                  const index = selectImages.findIndex(v => v.id == image.id)
-                  index == -1 ? state.push(image) : state.splice(index, 1)
-                })
+              onClick={event => {
+                if (event.shiftKey && selectImageIds.size > 0) {
+                  const firstSelectImagesIndex = images.findIndex(v => v.id == Array.from(selectImageIds)[0])
+                  setSelectImageIds.reset()
+                  for (const { id } of images.slice(Math.min(firstSelectImagesIndex, index), Math.max(firstSelectImagesIndex, index) + 1)) {
+                    setSelectImageIds.add(id)
+                  }
+                  return
+                }
+                setSelectImageIds.toggle(image.id)
               }}
               key={index}
               src={image.previewPath}

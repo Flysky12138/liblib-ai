@@ -26,6 +26,8 @@ import { cn } from '~lib/cn'
 import { generateImage, generateProgress } from '~lib/fetch'
 import { STORAGE } from '~lib/keys'
 
+const title = 'Liblib Ai'
+
 export default function App() {
   const instance = new Storage({ area: 'local' })
 
@@ -36,13 +38,15 @@ export default function App() {
 
   const toastID = React.useRef('0')
   const [generateTaskID, setGenerateTaskID] = useStorage<number>({ key: STORAGE.GENERATE_TASK_ID, instance }, 0)
-  const fetchOptions = React.useRef<{ body: StorageType['item']['body']; times: number }>({
+  const fetchOptions = React.useRef<{ body: StorageType['item']['body']; times: number; timesTotal: number }>({
     body: '',
-    times: 1
+    times: 1,
+    timesTotal: 1
   })
 
   // 图片生成请求
   const [{ loading }, doGenerateImageFetch] = useAsyncFn(async () => {
+    window.document.title = `【${fetchOptions.current.times}/${fetchOptions.current.timesTotal}】${title}`
     const { data } = await toast.promise(generateImage(fetchOptions.current.body), {
       error: error => error,
       loading: 'Loading',
@@ -61,8 +65,7 @@ export default function App() {
           <LinearProgress
             determinate
             variant="plain"
-            className="bg-slate-200"
-            color="neutral"
+            className="bg-slate-200 text-zinc-700"
             value={data.percentCompleted || 0}
             sx={{ '--LinearProgress-thickness': '30px' }}
           >
@@ -85,12 +88,15 @@ export default function App() {
           })
         )
         toast.remove(toastID.current)
-        if (fetchOptions.current.times-- > 1) {
+        if (++fetchOptions.current.times <= fetchOptions.current.timesTotal) {
           await doGenerateImageFetch()
+        } else {
+          window.document.title = title
         }
       }
     } catch (error) {
       console.error(error)
+      window.document.title = title
     }
   }, 2000)
 
@@ -220,12 +226,13 @@ export default function App() {
                           <FormControl>
                             <FormLabel>运行次数</FormLabel>
                             <Input
-                              defaultValue={fetchOptions.current.times}
+                              defaultValue={fetchOptions.current.timesTotal}
                               slotProps={{
                                 input: { min: 1 }
                               }}
                               onChange={event => {
-                                fetchOptions.current.times = Math.max(1, Number.parseInt(event.target.value || '0'))
+                                fetchOptions.current.times = 1
+                                fetchOptions.current.timesTotal = Math.max(1, Number.parseInt(event.target.value || '0'))
                               }}
                               type="number"
                             />
