@@ -46,13 +46,15 @@ export default function App() {
 
   // 图片生成请求
   const [{ loading }, doGenerateImageFetch] = useAsyncFn(async () => {
-    window.document.title = `【${fetchOptions.current.times}/${fetchOptions.current.timesTotal}】${title}`
     const { data } = await toast.promise(generateImage(fetchOptions.current.body), {
       error: error => error,
       loading: 'Loading',
       success: '请求成功'
     })
-    setGenerateTaskID(data)
+    if (data) {
+      await setGenerateTaskID(data)
+      window.document.title = `【${fetchOptions.current.times}/${fetchOptions.current.timesTotal}】${title}`
+    }
   })
 
   // 图片生成状态轮询
@@ -65,7 +67,7 @@ export default function App() {
           <LinearProgress
             determinate
             variant="plain"
-            className="bg-slate-200 text-zinc-700"
+            className="bg-slate-200 text-zinc-700 ring"
             value={data.percentCompleted || 0}
             sx={{ '--LinearProgress-thickness': '30px' }}
           >
@@ -151,7 +153,11 @@ export default function App() {
                   })
                   await setItems(
                     produce(state => {
-                      state.unshift({ id: Date.now(), body: JSON.stringify(body, null, '  ') })
+                      state.unshift({
+                        id: Date.now(),
+                        body: JSON.stringify(body, null, '  '),
+                        name: body.additionalNetwork?.reduce((pre, cur) => pre.concat(cur.modelName), []).join(' & ') || ''
+                      })
                     })
                   )
                 }}
@@ -235,6 +241,7 @@ export default function App() {
                                 fetchOptions.current.timesTotal = Math.max(1, Number.parseInt(event.target.value || '0'))
                               }}
                               type="number"
+                              onFocus={event => event.target.select()}
                             />
                           </FormControl>
                           <Button

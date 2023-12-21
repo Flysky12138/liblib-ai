@@ -33,6 +33,16 @@ export default function ImageLists({ value: images, onDelete }: ImageListsPropsT
           <CallMade />
         </IconButton>
       )}
+      onKeyDown={event => {
+        if (event.metaKey || event.ctrlKey) {
+          if (event.key.toLowerCase() == 'a') {
+            event.preventDefault()
+            for (const { id } of images) {
+              setSelectImageIds.add(id)
+            }
+          }
+        }
+      }}
     >
       <div className="mb-3 flex justify-end gap-x-3">
         {selectImageIds.size > 0 ? (
@@ -53,6 +63,7 @@ export default function ImageLists({ value: images, onDelete }: ImageListsPropsT
               variant="outlined"
               onClick={async () => {
                 getPort('download').postMessage({ body: Array.from(selectImageIds).map(id => images.find(image => image.id == id)) })
+                await onDelete(Array.from(selectImageIds))
                 setSelectImageIds.reset()
               }}
             >
@@ -72,7 +83,7 @@ export default function ImageLists({ value: images, onDelete }: ImageListsPropsT
         </IconButton>
       </div>
       <div
-        className="grid-c grid gap-4 p-2"
+        className="grid gap-4 p-2"
         style={{
           gridTemplateColumns: `repeat(${Math.round(width / 200)}, minmax(0, 1fr))`
         }}
@@ -81,7 +92,7 @@ export default function ImageLists({ value: images, onDelete }: ImageListsPropsT
           <div className="relative" key={image.id}>
             <img
               draggable="false"
-              className={cn('used cursor-pointer ring-orange-600 ring-offset-1', {
+              className={cn('cursor-pointer ring-orange-600 ring-offset-1', {
                 ring: selectImageIds.has(image.id)
               })}
               loading="lazy"

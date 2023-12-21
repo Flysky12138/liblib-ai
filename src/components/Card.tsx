@@ -155,7 +155,7 @@ export default function Card({ onDelete, onEdit, value, endDecorator }: CardProp
       )}
       {value.name && (
         <div className="absolute inset-x-2 bottom-2">
-          <Chip color="primary" variant="outlined" className="max-w-full overflow-hidden">
+          <Chip color="primary" variant="outlined" className="text-wrap rounded">
             {value.name}
           </Chip>
         </div>

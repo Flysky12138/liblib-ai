@@ -1,7 +1,43 @@
 interface StorageType {
   generateImageBody: {
     time: number
-    body: object
+    body: {
+      checkpointId: number
+      generateType: number
+      frontCustomerReq: {
+        frontId: string
+        windowId: string
+        tabType: string
+        conAndSegAndGen: string
+      }
+      text2img: {
+        prompt: string
+        negativePrompt: string
+        extraNetwork: string
+        samplingMethod: number
+        samplingStep: number
+        width: number
+        height: number
+        batchCount: number
+        batchSize: number
+        cfgScale: number
+        seed: number
+        seedExtra: number
+        hiResFix: number
+        restoreFaces: number
+        tiling: number
+        clipSkip: number
+      } | null
+      adetailerEnable: number
+      additionalNetwork: Array<{
+        modelId: number
+        type: number
+        weight: number
+        modelName: string
+        modelVersionName: string
+      }> | null
+      taskQueuePriority: number
+    }
   }
   item: {
     id: number
@@ -40,10 +76,10 @@ interface GenerateProgressResponse {
     statusMsg: null
     totalStep: number
     currentSteps: number
-    percentCompleted: null | number
+    percentCompleted: number | null
     timeTaken: number
     estTimeLeft: number
-    images: null | ImageType[]
+    images: ImageType[] | null
     saveStatus: boolean
     image2Txt: null
     generateSubId: null
@@ -51,9 +87,9 @@ interface GenerateProgressResponse {
     queueName: null
     power: number
     taskQueuePriority: number
-    queueNum: null | number
+    queueNum: number | null
     subTypeName: string
-    totalQueueNum: null | number
+    totalQueueNum: number | null
     extraType: number
   }
 }
