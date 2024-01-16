@@ -1,7 +1,8 @@
 import { DndContext } from '@dnd-kit/core'
 import { arrayMove, SortableContext } from '@dnd-kit/sortable'
-import HelpOutline from '@mui/icons-material/HelpOutline'
+import { ExitToApp, Output } from '@mui/icons-material'
 import Telegram from '@mui/icons-material/Telegram'
+import { ButtonGroup } from '@mui/joy'
 import Button from '@mui/joy/Button'
 import Chip from '@mui/joy/Chip'
 import FormControl from '@mui/joy/FormControl'
@@ -9,7 +10,6 @@ import FormLabel from '@mui/joy/FormLabel'
 import IconButton from '@mui/joy/IconButton'
 import Input from '@mui/joy/Input'
 import LinearProgress from '@mui/joy/LinearProgress'
-import Tooltip from '@mui/joy/Tooltip'
 import Typography from '@mui/joy/Typography'
 import { produce } from 'immer'
 import React from 'react'
@@ -23,6 +23,7 @@ import ImageLists from '~components/ImageLists'
 import Sortable from '~components/Sortable'
 import '~globals.css'
 import { cn } from '~lib/cn'
+import { exportConfig, importConfig } from '~lib/config'
 import { generateImage, generateProgress } from '~lib/fetch'
 import { STORAGE } from '~lib/keys'
 
@@ -112,72 +113,8 @@ export default function App() {
   }
 
   return (
-    <main className="grid h-full grid-cols-[220px_1fr] overflow-hidden">
+    <main className="grid h-screen grid-cols-[1fr_220px] overflow-hidden">
       <Toaster containerClassName="text-base" />
-      <div className="border-r">
-        <div className="flex h-12 items-center justify-between border-b bg-slate-200 px-5">
-          <Tooltip
-            title={
-              <>
-                <p>左键：添加</p>
-                <p>右键：删除</p>
-              </>
-            }
-            arrow
-            placement="right-end"
-          >
-            <IconButton size="sm" variant="outlined">
-              <HelpOutline />
-            </IconButton>
-          </Tooltip>
-          <ImageLists
-            value={images}
-            onDelete={async ids => {
-              await setImages(produce(state => state.filter(({ id }) => !ids.includes(id))))
-            }}
-          />
-        </div>
-        <div className="flex h-[calc(100vh-theme(height.12))] flex-col items-center gap-y-3 overflow-y-auto bg-stone-100 py-5">
-          {generateImageBodys.length ? (
-            generateImageBodys.map(({ time, body }, index) => (
-              <Chip
-                key={time}
-                color="primary"
-                variant="outlined"
-                size="lg"
-                className="relative cursor-pointer select-none overflow-hidden hover:bg-blue-100"
-                onClick={async () => {
-                  setGenerateImageBodys(state => {
-                    state.splice(index, 1)
-                    return state
-                  })
-                  await setItems(
-                    produce(state => {
-                      state.unshift({
-                        id: Date.now(),
-                        body: JSON.stringify(body, null, '  '),
-                        name: body.additionalNetwork?.reduce((pre, cur) => pre.concat(cur.modelName), []).join(' & ') || ''
-                      })
-                    })
-                  )
-                }}
-                onContextMenu={event => {
-                  event.preventDefault()
-                  setGenerateImageBodys(
-                    produce(state => {
-                      state.splice(index, 1)
-                    })
-                  )
-                }}
-              >
-                {new Date(time).toLocaleString()}
-              </Chip>
-            ))
-          ) : (
-            <div className="grid h-full -translate-y-20 place-content-center text-base">无生成图的请求记录 ಠ_ಠ</div>
-          )}
-        </div>
-      </div>
       <DndContext
         onDragEnd={event => {
           const { active, over } = event
@@ -264,6 +201,66 @@ export default function App() {
           </div>
         </SortableContext>
       </DndContext>
+      <div className="flex flex-col border-l">
+        <div className="flex h-12 items-center border-b bg-slate-200 px-5">
+          <ButtonGroup color="primary">
+            <IconButton onClick={importConfig}>
+              <ExitToApp />
+            </IconButton>
+            <IconButton onClick={exportConfig}>
+              <Output />
+            </IconButton>
+          </ButtonGroup>
+          <span aria-hidden="true" className="grow"></span>
+          <ImageLists
+            value={images}
+            onDelete={async ids => {
+              await setImages(produce(state => state.filter(({ id }) => !ids.includes(id))))
+            }}
+          />
+        </div>
+        <div className="flex grow flex-col items-center gap-y-3 overflow-y-auto bg-stone-100 py-5">
+          {generateImageBodys.length ? (
+            generateImageBodys.map(({ time, body }, index) => (
+              <Chip
+                key={time}
+                color="primary"
+                variant="outlined"
+                size="lg"
+                className="relative cursor-pointer select-none overflow-hidden hover:bg-blue-100"
+                onClick={async () => {
+                  setGenerateImageBodys(state => {
+                    state.splice(index, 1)
+                    return state
+                  })
+                  await setItems(
+                    produce(state => {
+                      state.unshift({
+                        id: Date.now(),
+                        body: JSON.stringify(body, null, '  '),
+                        name: body.additionalNetwork?.reduce((pre, cur) => pre.concat(cur.modelName), []).join(' & ') || ''
+                      })
+                    })
+                  )
+                }}
+                onContextMenu={event => {
+                  event.preventDefault()
+                  setGenerateImageBodys(
+                    produce(state => {
+                      state.splice(index, 1)
+                    })
+                  )
+                }}
+              >
+                {new Date(time).toLocaleString()}
+              </Chip>
+            ))
+          ) : (
+            <div className="grid h-full -translate-y-20 place-content-center text-base">无生成图的请求记录 ಠ_ಠ</div>
+          )}
+        </div>
+        <p className="border-t bg-stone-100 py-1 text-center">左键：添加；右键：删除</p>
+      </div>
     </main>
   )
 }

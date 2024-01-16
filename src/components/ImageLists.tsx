@@ -1,6 +1,5 @@
+import { ZoomInMap, ZoomOutMap } from '@mui/icons-material'
 import ArrowDownward from '@mui/icons-material/ArrowDownward'
-import CallMade from '@mui/icons-material/CallMade'
-import Close from '@mui/icons-material/Close'
 import DeleteForever from '@mui/icons-material/DeleteForever'
 import Chip from '@mui/joy/Chip'
 import IconButton from '@mui/joy/IconButton'
@@ -30,7 +29,7 @@ export default function ImageLists({ value: images, onDelete }: ImageListsPropsT
       }}
       component={props => (
         <IconButton color="primary" size="sm" variant="outlined" {...props}>
-          <CallMade />
+          <ZoomOutMap />
         </IconButton>
       )}
       onKeyDown={event => {
@@ -79,7 +78,7 @@ export default function ImageLists({ value: images, onDelete }: ImageListsPropsT
             imagesModalRef.current?.setOpen(false)
           }}
         >
-          <Close />
+          <ZoomInMap />
         </IconButton>
       </div>
       <div

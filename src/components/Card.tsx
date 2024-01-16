@@ -8,7 +8,9 @@ import FormLabel from '@mui/joy/FormLabel'
 import IconButton from '@mui/joy/IconButton'
 import Input from '@mui/joy/Input'
 import Textarea from '@mui/joy/Textarea'
+import Compressor from 'compressorjs'
 import React from 'react'
+import toast from 'react-hot-toast'
 import { useImmer } from 'use-immer'
 import CustomModal, { CustomModalRefType } from './CustomModal'
 
@@ -84,7 +86,6 @@ export default function Card({ onDelete, onEdit, value, endDecorator }: CardProp
                   event.preventDefault()
                   setEditCache(state => {
                     state.image = undefined
-                    return state
                   })
                 }}
               >
@@ -93,16 +94,27 @@ export default function Card({ onDelete, onEdit, value, endDecorator }: CardProp
                   className="hidden"
                   aria-hidden="true"
                   type="file"
+                  accept="image/*"
                   onChange={event => {
+                    const file = event.target.files[0]
+
                     const reader = new FileReader()
-                    reader.readAsDataURL(event.target.files[0])
                     reader.onloadend = () => {
                       setEditCache(state => {
                         state.image = reader.result as string
-                        return state
                       })
                       event.target.value = null
                     }
+
+                    new Compressor(file, {
+                      quality: 0.8,
+                      retainExif: true,
+                      convertSize: 0,
+                      success(result) {
+                        reader.readAsDataURL(result)
+                        toast(`${file.type} ${(file.size / 2 ** 20).toFixed(2)}M -> ${result.type} ${(result.size / 2 ** 20).toFixed(2)}M`)
+                      }
+                    })
                   }}
                 />
                 {editCahce.image ? (
@@ -155,7 +167,7 @@ export default function Card({ onDelete, onEdit, value, endDecorator }: CardProp
       )}
       {value.name && (
         <div className="absolute inset-x-2 bottom-2">
-          <Chip color="primary" variant="outlined" className="text-wrap rounded">
+          <Chip color="primary" variant="outlined" className="text-wrap break-all rounded">
             {value.name}
           </Chip>
         </div>

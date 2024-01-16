@@ -4,4 +4,4 @@ export const STORAGE = {
   GENERATE_TASK_ID: 'generate-task-id',
   TOKEN: 'token',
   IMAGES: 'images'
-}
+} as const

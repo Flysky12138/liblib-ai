@@ -1,7 +1,7 @@
 {
   "name": "liblib-ai",
   "displayName": "Liblib Ai",
-  "version": "0.0.4",
+  "version": "0.1.0",
   "description": "Record requests, repeat requests",
   "author": "xhp443@gmail.com",
   "license": "GPL-3.0-only",
@@ -21,6 +21,7 @@
     "@plasmohq/messaging": "^0.6.1",
     "@plasmohq/storage": "^1.9.0",
     "clsx": "^2.0.0",
+    "compressorjs": "^1.2.1",
     "immer": "^10.0.3",
     "plasmo": "0.84.0",
     "react": "18.2.0",
@@ -54,5 +55,9 @@
     "host_permissions": [
       "https://*/*"
     ]
-  }
+  },
+  "browserslist": [
+    "last 1 version",
+    "> 1%"
+  ]
 }
