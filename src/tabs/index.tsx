@@ -14,7 +14,8 @@ import Typography from '@mui/joy/Typography'
 import { produce } from 'immer'
 import React from 'react'
 import toast, { Toaster } from 'react-hot-toast'
-import { useAsyncFn, useInterval } from 'react-use'
+import { useAsync, useAsyncFn, useInterval } from 'react-use'
+import { useImmer } from 'use-immer'
 import { Storage } from '@plasmohq/storage'
 import { useStorage } from '@plasmohq/storage/hook'
 import Card from '~components/Card'
@@ -24,6 +25,7 @@ import Sortable from '~components/Sortable'
 import '~globals.css'
 import { cn } from '~lib/cn'
 import { exportConfig, importConfig } from '~lib/config'
+import { download } from '~lib/download'
 import { generateImage, generateProgress } from '~lib/fetch'
 import { STORAGE } from '~lib/keys'
 
@@ -34,13 +36,23 @@ export default function App() {
 
   // 存储数据
   const [generateImageBodys, setGenerateImageBodys] = useStorage<StorageType['generateImageBody'][]>({ key: STORAGE.GENERATE_IMAGE_BODY, instance }, [])
-  const [items, setItems] = useStorage<StorageType['item'][]>({ key: STORAGE.ITEMS, instance }, [])
   const [images, setImages] = useStorage<ImageType[]>({ key: STORAGE.IMAGES, instance }, [])
+
+  // 由于拖拽排序，所以不直接依赖 useStorage 异步读取
+  const [items, setItems] = useImmer<StorageType['item'][]>([])
+  useAsync(async () => {
+    const cards = await instance.get<StorageType['item'][]>(STORAGE.ITEMS)
+    setItems(cards)
+  })
+  React.useEffect(() => {
+    instance.set(STORAGE.ITEMS, items)
+  }, [items])
 
   const toastID = React.useRef('0')
   const [generateTaskID, setGenerateTaskID] = useStorage<number>({ key: STORAGE.GENERATE_TASK_ID, instance }, 0)
-  const fetchOptions = React.useRef<{ body: StorageType['item']['body']; times: number; timesTotal: number }>({
+  const fetchOptions = React.useRef<{ body: StorageType['item']['body']; times: number; timesTotal: number; name: string }>({
     body: '',
+    name: '',
     times: 1,
     timesTotal: 1
   })
@@ -85,6 +97,12 @@ export default function App() {
       if (data.images) {
         toast.success('生成成功')
         await setGenerateTaskID(0)
+        download(
+          data.images.map(image => ({
+            ...image,
+            storagePath: fetchOptions.current.name.replace(/[<>\/|:*?+-.]/g, '') + '/' + image.storagePath.slice(image.storagePath.lastIndexOf('/'))
+          }))
+        )
         await setImages(
           produce(state => {
             state.unshift(...data.images)
@@ -134,18 +152,14 @@ export default function App() {
                   value={item}
                   onDelete={async () => {
                     if (!confirm('确认删除？')) return
-                    await setItems(
-                      produce(state => {
-                        state.splice(index, 1)
-                      })
-                    )
+                    setItems(state => {
+                      state.splice(index, 1)
+                    })
                   }}
                   onEdit={async payload => {
-                    await setItems(
-                      produce(state => {
-                        state.splice(index, 1, payload)
-                      })
-                    )
+                    setItems(state => {
+                      state.splice(index, 1, payload)
+                    })
                   }}
                   endDecorator={
                     <CustomModal
@@ -174,7 +188,6 @@ export default function App() {
                                 input: { min: 1 }
                               }}
                               onChange={event => {
-                                fetchOptions.current.times = 1
                                 fetchOptions.current.timesTotal = Math.max(1, Number.parseInt(event.target.value || '0'))
                               }}
                               type="number"
@@ -184,6 +197,8 @@ export default function App() {
                           <Button
                             className="mt-4"
                             onClick={async () => {
+                              fetchOptions.current.name = item.name || ''
+                              fetchOptions.current.times = 1
                               fetchOptions.current.body = item.body
                               await doGenerateImageFetch()
                               setOpen(false)
@@ -233,15 +248,13 @@ export default function App() {
                     state.splice(index, 1)
                     return state
                   })
-                  await setItems(
-                    produce(state => {
-                      state.unshift({
-                        id: Date.now(),
-                        body: JSON.stringify(body, null, '  '),
-                        name: body.additionalNetwork?.reduce((pre, cur) => pre.concat(cur.modelName), []).join(' & ') || ''
-                      })
+                  setItems(state => {
+                    state.unshift({
+                      id: Date.now(),
+                      body: JSON.stringify(body, null, '  '),
+                      name: body.additionalNetwork?.reduce((pre, cur) => pre.concat(cur.modelName), []).join(' & ') || ''
                     })
-                  )
+                  })
                 }}
                 onContextMenu={event => {
                   event.preventDefault()

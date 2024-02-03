@@ -5,8 +5,8 @@ import Chip from '@mui/joy/Chip'
 import IconButton from '@mui/joy/IconButton'
 import React from 'react'
 import { useSet, useWindowSize } from 'react-use'
-import { getPort } from '@plasmohq/messaging/port'
 import { cn } from '~lib/cn'
+import { download } from '~lib/download'
 import CustomModal, { CustomModalRefType } from './CustomModal'
 
 interface ImageListsPropsType {
@@ -61,7 +61,7 @@ export default function ImageLists({ value: images, onDelete }: ImageListsPropsT
               color="primary"
               variant="outlined"
               onClick={async () => {
-                getPort('download').postMessage({ body: Array.from(selectImageIds).map(id => images.find(image => image.id == id)) })
+                await download(Array.from(selectImageIds).map(id => images.find(image => image.id == id)))
                 await onDelete(Array.from(selectImageIds))
                 setSelectImageIds.reset()
               }}
