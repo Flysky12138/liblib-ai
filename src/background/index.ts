@@ -40,3 +40,17 @@ chrome.webRequest.onBeforeRequest.addListener(
   { urls: ['https://liblib-api.vibrou.com/gateway/sd-api/generate/image'] },
   ['requestBody']
 )
+
+// 右键菜单
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: 'clear-generate-task-id',
+    title: '解决长时间等待状态',
+    contexts: ['action']
+  })
+  chrome.contextMenus.onClicked.addListener(({ menuItemId }) => {
+    if (menuItemId != 'clear-generate-task-id') return
+    const storage = new Storage({ area: 'local' })
+    storage.set(STORAGE.GENERATE_TASK_ID, 0)
+  })
+})
